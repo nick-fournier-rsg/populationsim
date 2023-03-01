@@ -269,6 +269,10 @@ def do_balancing(control_spec,
         total_weights = initial_weights.sum()
         lb_ratio = min_expansion_factor * float(number_of_households) / float(total_weights)
 
+        # Added hard limit of min_expansion_factor value that would otherwise drift
+        # due to the float(number_of_households) / float(total_weights) calculation
+        lb_ratio = np.clip(lb_ratio, a_min=min_expansion_factor, a_max=None)
+
         lb_weights = initial_weights * lb_ratio
 
         if absolute_lower_bound:
@@ -289,6 +293,10 @@ def do_balancing(control_spec,
 
         total_weights = initial_weights.sum()
         ub_ratio = max_expansion_factor * float(number_of_households) / float(total_weights)
+
+        # Added hard limit of max_expansion_factor value that would otherwise drift
+        # due to the float(number_of_households) / float(total_weights) calculation
+        ub_ratio = np.clip(ub_ratio, a_max=max_expansion_factor, a_min=None)
 
         ub_weights = initial_weights * ub_ratio
 
