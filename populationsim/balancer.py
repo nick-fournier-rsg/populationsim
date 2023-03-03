@@ -243,7 +243,8 @@ def do_balancing(control_spec,
                  total_hh_control_col,
                  max_expansion_factor, min_expansion_factor,
                  absolute_upper_bound, absolute_lower_bound,
-                 incidence_df, control_totals, initial_weights):
+                 incidence_df, control_totals, initial_weights,
+                 use_hard_constraints):
 
     # incidence table should only have control columns
     incidence_df = incidence_df[control_spec.target]
@@ -271,7 +272,8 @@ def do_balancing(control_spec,
 
         # Added hard limit of min_expansion_factor value that would otherwise drift
         # due to the float(number_of_households) / float(total_weights) calculation
-        lb_ratio = np.clip(lb_ratio, a_min=min_expansion_factor, a_max=None)
+        if use_hard_constraints:
+            lb_ratio = np.clip(lb_ratio, a_min=min_expansion_factor, a_max=None)
 
         lb_weights = initial_weights * lb_ratio
 
@@ -296,7 +298,8 @@ def do_balancing(control_spec,
 
         # Added hard limit of max_expansion_factor value that would otherwise drift
         # due to the float(number_of_households) / float(total_weights) calculation
-        ub_ratio = np.clip(ub_ratio, a_max=max_expansion_factor, a_min=None)
+        if use_hard_constraints:
+            ub_ratio = np.clip(ub_ratio, a_max=max_expansion_factor, a_min=None)
 
         ub_weights = initial_weights * ub_ratio
 
