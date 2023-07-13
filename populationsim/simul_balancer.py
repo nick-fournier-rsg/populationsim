@@ -99,8 +99,18 @@ class SimultaneousListBalancer(object):
         total_hh_controls = self.controls.iloc[self.master_control_index]
         total_hh = int(total_hh_controls['total'])
         sub_zone_hh_fractions = total_hh_controls[self.sub_control_zones] / total_hh
-        for zone, zone_name in list(self.sub_control_zones.items()):
-            self.weights[zone_name] = self.weights['parent'] * sub_zone_hh_fractions[zone_name]
+        
+        # Using matrix multiplication to get the subzone weights. It is faster than looping pandas
+        new_weights = np.outer(self.weights['parent'], sub_zone_hh_fractions[self.sub_control_zones.values])            
+        new_weights = pd.DataFrame(new_weights, index=self.weights.index, columns=self.sub_control_zones.tolist())                
+        
+        if len(set(new_weights.columns).intersection(self.weights.columns)) > 0:
+            self.weights.update(new_weights)                
+        else:
+            self.weights = self.weights.join(new_weights)
+        
+        # for zone, zone_name in list(self.sub_control_zones.items()):
+        #     self.weights[zone_name] = self.weights['parent'] * sub_zone_hh_fractions[zone_name]
 
         self.controls['total'] = np.maximum(self.controls['total'], MIN_CONTROL_VALUE)
 
@@ -143,10 +153,17 @@ class SimultaneousListBalancer(object):
             sub_controls)
 
         # dataframe with sub_zone_weights in columns, and zero weight rows restored
-        self.sub_zone_weights = pd.DataFrame(index=self.positive_weight_rows.index)
-        for i, c in zip(list(range(len(self.sub_control_zones))), self.sub_control_zones):
-            self.sub_zone_weights[c] = pd.Series(weights_final[i], self.weights.index)
-        self.sub_zone_weights.fillna(value=0.0, inplace=True)
+        # self.sub_zone_weights = pd.DataFrame(index=self.positive_weight_rows.index)
+        # for i, c in zip(list(range(len(self.sub_control_zones))), self.sub_control_zones):
+        #     self.sub_zone_weights[c] = pd.Series(weights_final[i], self.weights.index)
+        # self.sub_zone_weights.fillna(value=0.0, inplace=True)
+        
+        # The looping is slow, it should be performed in some bulk pandas/numpy operation.
+        self.sub_zone_weights = pd.DataFrame(weights_final[range(len(self.sub_control_zones))].transpose(),
+                                            index=self.weights.index,
+                                            columns=self.sub_control_zones.tolist())
+        self.sub_zone_weights = self.sub_zone_weights.reindex(self.positive_weight_rows.index)
+        self.sub_zone_weights.fillna(value=0.0, inplace=True)        
 
         # series mapping zone_id to column names
         self.sub_zone_ids = self.sub_control_zones.index.values
@@ -202,6 +219,12 @@ def np_simul_balancer(
 
     # precompute incidence squared
     incidence2 = incidence * incidence
+    
+    # Unbound variables
+    converged = False
+    iter = 0
+    delta = None
+    max_gamma_dif = None    
 
     max_iterations = setting('MAX_BALANCE_ITERATIONS_SIMULTANEOUS', DEFAULT_MAX_ITERATIONS)
     for iter in range(max_iterations):

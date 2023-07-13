@@ -74,8 +74,18 @@ def balance(
     controls = pd.DataFrame({'name': sub_control_spec.target})
     controls['importance'] = sub_control_spec.importance
     controls['total'] = sub_controls_df.sum(axis=0).values
-    for zone, zone_name in sub_control_zones.items():
-        controls[zone_name] = sub_controls_df.loc[zone].values
+    
+    # Perform in bulk rather than slow loop over pandas
+    new_controls = sub_controls_df.loc[sub_control_zones.index].transpose()
+    new_controls.columns = sub_control_zones.values
+
+    if len(set(controls.columns).intersection(new_controls.columns)) > 0:
+        controls.update(new_controls)               
+    else:
+        controls = controls.merge(new_controls, left_on='name', right_index=True)   
+    
+    # for zone, zone_name in sub_control_zones.items():
+    #     controls[zone_name] = sub_controls_df.loc[zone].values
 
     # incidence table should only have control columns
     sub_incidence_df = incidence_df[sub_control_spec.target]
@@ -180,6 +190,8 @@ def balance_and_integerize(
         sub_geography=sub_geography,
         sub_control_zones=sub_control_zones)
 
+    assert isinstance(integerized_sub_zone_weights_df, pd.DataFrame), "multi_integerize did not return a DataFrame"
+    
     integerized_sub_zone_weights_df[parent_geography] = parent_id
 
     return integerized_sub_zone_weights_df
