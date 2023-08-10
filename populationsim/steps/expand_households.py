@@ -45,6 +45,7 @@ def expand_households():
     geography_cols = geographies[geographies.index(seed_geography):]
 
     weights = get_weight_table(low_geography, sparse=True)
+    assert isinstance(weights, pd.DataFrame), "get_weight_table should return a dataframe"
     weights = weights[geography_cols + [household_id_col, 'integer_weight']]
 
     # - expand weights table by integer_weight, so there is one row per desired hh

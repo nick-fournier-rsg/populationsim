@@ -50,6 +50,8 @@ def integerize_final_seed_weights(settings, crosswalk, control_spec, incidence_t
     seed_controls_df = get_control_table(seed_geography)
 
     seed_weights_df = get_weight_table(seed_geography)
+    
+    assert isinstance(seed_weights_df, pd.DataFrame), "get_weight_table should return a dataframe"
 
     # FIXME - I assume we want to integerize using meta controls too?
     control_cols = control_spec.target
@@ -60,7 +62,7 @@ def integerize_final_seed_weights(settings, crosswalk, control_spec, incidence_t
 
     # run balancer for each seed geography
     weight_list = []
-
+    
     seed_ids = crosswalk_df[seed_geography].unique()
     for seed_id in seed_ids:
 
