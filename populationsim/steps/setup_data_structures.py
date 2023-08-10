@@ -219,16 +219,20 @@ def build_grouped_incidence_table(incidence_table, control_spec, seed_geography)
     group_incidence_table['sample_weight'] = hh_grouper.sum()['sample_weight']
     group_incidence_table['group_size'] = hh_grouper.count()['sample_weight']
     group_incidence_table = group_incidence_table.reset_index()
+    
+    # Enforce int64 to join large tables
+    group_incidence_table = group_incidence_table.astype(np.int64)
 
     logger.info("grouped incidence table has %s entries, ungrouped has %s"
                 % (len(group_incidence_table.index), len(hh_incidence_table.index)))
 
     # add group_id of each hh to hh_incidence_table
-    group_incidence_table['group_id'] = group_incidence_table.index
-    hh_incidence_table['group_id'] = hh_incidence_table[hh_groupby_cols].merge(
+    group_incidence_table['group_id'] = group_incidence_table.index.astype(np.int64)    
+    hh_incidence_table['group_id'] = pd.merge(
+        hh_incidence_table[hh_groupby_cols], 
         group_incidence_table[hh_groupby_cols + ['group_id']],
         on=hh_groupby_cols,
-        how='left').group_id.astype(np.int64).values
+        how='left').group_id.values
 
     # it doesn't really matter what the incidence_table index is until we create population
     # when we need to expand each group to constituent households
