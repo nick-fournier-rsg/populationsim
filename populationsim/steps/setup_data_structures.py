@@ -336,7 +336,12 @@ def setup_data_structures(settings, households, persons):
 
     for g in geographies:
         controls = build_control_table(g, control_spec, crosswalk_df)
+        # Remove zones from xwalk missing from controls (e.g. zones with zero households)
+        crosswalk_df = crosswalk_df[crosswalk_df[g].isin(controls.index)]
         inject.add_table(control_table_name(g), controls)
+        
+    # update xwalk object
+    pipeline.replace_table('crosswalk', crosswalk_df)        
 
     households_df, persons_df = filter_households(households_df, persons_df, crosswalk_df)
     pipeline.replace_table('households', households_df)
