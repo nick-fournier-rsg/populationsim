@@ -204,6 +204,15 @@ def build_crosswalk_table():
     low_control_data_df = get_control_data_table(low_geography)
     rows_in_low_controls = crosswalk[low_geography].isin(low_control_data_df[low_geography])
     crosswalk = crosswalk[rows_in_low_controls]
+    
+    # Ensure consistent nesting of geography hierarchies. e.g., a tract cannot be in two PUMAS
+    geos = setting('geographies')    
+    for i, g in enumerate(geos[1:], start=0):
+        count = crosswalk.groupby(g)[geos[i]].nunique()
+        double_counted = crosswalk.loc[crosswalk[g].isin(count[count > 1].index), geos[i]].to_list()
+
+        assert (count > 1).any() == 0, \
+            f"Geography {g} is double counted in {double_counted}. Check that the crosswalk table is correct or that the 'geographies' setting is in the correct order from largest to smallest."
 
     return crosswalk
 
