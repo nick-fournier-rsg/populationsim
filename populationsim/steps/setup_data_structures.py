@@ -206,14 +206,27 @@ def build_crosswalk_table():
     crosswalk = crosswalk[rows_in_low_controls]
     
     # Ensure consistent nesting of geography hierarchies. e.g., a tract cannot be in two PUMAS
-    geos = setting('geographies')    
+    geos = setting('geographies')
+    slice_geo = setting('slice_geography')
+    
+    # Start from sliced geography.    
+    slice_level = geos.index(slice_geo)
     for i, g in enumerate(geos[1:], start=0):
-        count = crosswalk.groupby(g)[geos[i]].nunique()
-        double_counted = crosswalk.loc[crosswalk[g].isin(count[count > 1].index), geos[i]].to_list()
-
-        assert (count > 1).any() == 0, \
-            f"Geography {g} is double counted in {double_counted}. Check that the crosswalk table is correct or that the 'geographies' setting is in the correct order from largest to smallest."
-
+        count = crosswalk.groupby(g)[geos[i]].nunique()        
+        
+        if (count > 1).any():
+            double_counted = crosswalk.loc[crosswalk[g].isin(count[count > 1].index), geos[i]].unique()
+            msg = f"{g} geography {double_counted} overlaps with zones and does not exclusively nest within higher order geographies in crosswalk.\n"
+            msg += "Check that the crosswalk table is correct,that the 'geographies' setting is in the correct order from largest to smallest, or slice at a lower level.\n"
+            msg += "This will produce an error in multiprocessing if sliced at this level."
+            
+            # If multiprocess, consistent geography nesting is required.
+            if setting('multiprocess', False) and (slice_level <= i):
+                raise RuntimeError(msg)
+            # Otherwise it is ok but not ideal. Produce a warning.
+            else:
+                Warning(msg)
+                
     return crosswalk
 
 
