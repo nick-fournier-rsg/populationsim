@@ -215,17 +215,19 @@ def build_crosswalk_table():
         count = crosswalk.groupby(g)[geos[i]].nunique()        
         
         if (count > 1).any():
-            double_counted = crosswalk.loc[crosswalk[g].isin(count[count > 1].index), geos[i]].unique()
-            msg = f"{g} geography {double_counted} overlaps with zones and does not exclusively nest within higher order geographies in crosswalk.\n"
+            dupes = crosswalk.loc[crosswalk[g].isin(count[count > 1].index)].groupby([geos[i], g]).size().to_frame('N')            
+            msg = f"{g} geography overlaps with {geos[i]} and does not exclusively nest within higher order geographies in crosswalk.\n"
             msg += "Check that the crosswalk table is correct,that the 'geographies' setting is in the correct order from largest to smallest, or slice at a lower level.\n"
-            msg += "This will produce an error in multiprocessing if sliced at this level."
-            
+            msg += "This will produce an error in multiprocessing if sliced at this level.\n"
+                        
             # If multiprocess, consistent geography nesting is required.
             if setting('multiprocess', False) and (slice_level <= i):
                 raise RuntimeError(msg)
             # Otherwise it is ok but not ideal. Produce a warning.
             else:
                 Warning(msg)
+                
+            print(dupes)
                 
     return crosswalk
 
