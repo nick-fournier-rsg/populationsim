@@ -283,11 +283,9 @@ def sub_balancing(settings, crosswalk, control_spec, incidence_table):
                 initial_weights = initial_weights['balanced_weight']
             else:
                 initial_weights = initial_weights['integer_weight']
-                
-            if len(initial_weights.index) != len(seed_incidence_df.index):
-                print('HERE!')
 
-            assert len(initial_weights.index) == len(seed_incidence_df.index)
+            assert len(initial_weights.index) == len(seed_incidence_df.index), \
+                "seed table and initial weights table do not match, possibly due to overlapping zones in crosswalk."
 
             zone_weights_df = balance_and_integerize(
                 incidence_df=seed_incidence_df,

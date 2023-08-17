@@ -4,9 +4,9 @@
 
 import logging
 import os
-
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 from activitysim.core import inject
 
@@ -46,22 +46,22 @@ def summarize_geography(geography, weight_col, hh_id_col,
     # only want zones from crosswalk for which non-zero control rows exist
     zone_ids = crosswalk_df[geography].unique()
     zone_ids = controls_df.index.intersection(zone_ids)
-
-    results = []
-    controls = []
-    for zone_id in zone_ids:
-
-        zone_controls = controls_df.loc[zone_id].tolist()
-        controls.append(zone_controls)
-
+        
+    def get_results(zone_id):
         zone_row_map = results_df[geography] == zone_id
         zone_weights = results_df[zone_row_map]
-
+        
         incidence = incidence_df.loc[zone_weights[hh_id_col]]
-
         weights = zone_weights[weight_col].tolist()
+        
         x = [(incidence[c] * weights).sum() for c in control_names]
-        results.append(x)
+        
+        return x
+
+
+    logger.info("summarizing %s" % geography)
+    controls = [controls_df.loc[x].tolist() for x in zone_ids]
+    results = [get_results(x) for x in tqdm(zone_ids)]
 
     controls_df = pd.DataFrame(
         data=np.asanyarray(controls),

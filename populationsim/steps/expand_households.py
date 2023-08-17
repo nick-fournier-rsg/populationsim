@@ -73,39 +73,25 @@ def expand_households():
         HH_IDS = 0
         HH_PROBS = 1        
         grouper = household_groups.groupby('group_id')
-        # group_hh_probs = [0] * len(grouper)
-        # for group_id, df in tqdm(grouper):
-        #     hh_ids = list(df[household_id_col])
-        #     probs = list(df.sample_weight / df.sample_weight.sum())
-        #     group_hh_probs[group_id] = [hh_ids, probs]
         
-        # Simple list comprehension is slightly faster and MUCH more memory efficient
-        # This is because the apply vectorizes it by first expanding all choices and then sampling.
-        # This expansion uses a lot of memory and ends up creating more overhead than is saved than just sampling one at a time.
         logger.info(f"Calculating household group probabilities for {len(grouper)} groups")
         def group_probs(group_id, df):
             hh_ids = list(df[household_id_col])
             probs = list(df.sample_weight / df.sample_weight.sum())
             return [hh_ids, probs]
-        
+
         group_hh_probs = [group_probs(*x) for x in tqdm(grouper)]      
         
         # get a repeatable random number sequence generator for consistent choice results
         prng = pipeline.get_rn_generator().get_external_rng('expand_households')
 
         # now make a hh_id choice for each group_id in expanded_weights  
-        # expanded_weights[household_id_col] = \
-        #     expanded_weights.group_id.apply(chooser, convert_dtype=True,)
-        
-        # Simple list comprehension is slightly faster and MUCH more memory efficient
-        # This is because the apply vectorizes it by first expanding all choices and then sampling.
-        # This expansion uses a lot of memory and ends up creating more overhead than is saved than just sampling one at a time.
         logger.info(f"Making expanded hh_id choices for {expanded_weights.shape[0]} households")
         def chooser(group_id):
             hh_ids = group_hh_probs[group_id][HH_IDS]
             hh_probs = group_hh_probs[group_id][HH_PROBS]
-            return prng.choice(hh_ids, p=hh_probs)           
-        
+            return prng.choice(hh_ids, p=hh_probs)          
+
         expanded_weights[household_id_col] = [chooser(x) for x in tqdm(expanded_weights.group_id)]
 
         # FIXME - omit in production?
