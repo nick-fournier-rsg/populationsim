@@ -165,6 +165,8 @@ def summarize(crosswalk, incidence_table, control_spec):
     seed_geography = setting('seed_geography')
     meta_geography = geographies[0]
     sub_geographies = geographies[geographies.index(seed_geography) + 1:]
+    super_geographies = geographies[:geographies.index(seed_geography)]
+    
     hh_id_col = setting('household_id_col')
 
     meta_ids = crosswalk_df[meta_geography].unique()
@@ -221,12 +223,17 @@ def summarize(crosswalk, incidence_table, control_spec):
         out_table('%s_aggregate' % (geography,), aggegrate_weights)
 
         summary_col = 'integer_weight' if include_integer_colums else 'balanced_weight'
-        df = summarize_geography(seed_geography, summary_col, hh_id_col,
+        df_seed = summarize_geography(seed_geography, summary_col, hh_id_col,
                                  crosswalk_df, weights_df, incidence_df)
-        out_table('%s_%s' % (geography, seed_geography,), df)
+        out_table('%s_%s' % (geography, seed_geography,), df_seed)
 
-        df = summarize_geography(geography, summary_col, hh_id_col,
+        df_geo = summarize_geography(geography, summary_col, hh_id_col,
                                  crosswalk_df, weights_df, incidence_df)
-        out_table('%s' % (geography,), df)
+        out_table('%s' % (geography,), df_geo)
+        
+        # Aggregate super geographies
+        for super_geo in super_geographies:        
+            df_super = summarize_geography(super_geo, summary_col, hh_id_col, crosswalk_df, weights_df, incidence_df)
+            out_table('%s_%s' % (geography, super_geo,), df_super)
 
     out_table('hh_weights', hh_weights_summary)
