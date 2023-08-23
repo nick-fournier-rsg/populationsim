@@ -55,12 +55,15 @@ def summarize_geography(geography, weight_col, hh_id_col,
     incidence = incidence_df.loc[zone_results_df[hh_id_col], control_names].to_numpy()
     
     results = np.transpose(np.transpose(incidence) * weights)
-    results = np.column_stack([results, geo_vec])
-    summary_df = pd.DataFrame(results, columns=control_names + [geography]).groupby(geography).sum()
-    
+    results = np.column_stack([results, geo_vec])    
 
     logger.info("summarizing %s" % geography)
     controls = [controls_table.loc[x].tolist() for x in zone_ids]
+    
+    summary_df = pd.DataFrame(
+        data=results,
+        columns=['%s_result' % c for c in control_names] + [geography]
+    ).groupby(geography).sum()
     
     controls_df = pd.DataFrame(
         data=np.asanyarray(controls),
@@ -75,7 +78,7 @@ def summarize_geography(geography, weight_col, hh_id_col,
         index=zone_ids
     )
 
-    summary_df = pd.concat([controls_df, summary_df, dif_df], axis=1)
+    summary_df = pd.concat([controls_df, summary_df, dif_df], axis=1, ignore_index=False)
 
     summary_cols = summary_df.columns.tolist()
 
