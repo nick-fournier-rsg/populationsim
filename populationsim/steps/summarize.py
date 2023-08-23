@@ -40,43 +40,37 @@ def summarize_geography(geography, weight_col, hh_id_col,
                         crosswalk_df, results_df, incidence_df):
 
     # controls_table for current geography level
-    controls_df = get_control_table(geography)
-    control_names = controls_df.columns.tolist()
+    controls_table = get_control_table(geography)
+    control_names = controls_table.columns.tolist()
 
     # only want zones from crosswalk for which non-zero control rows exist
     zone_ids = crosswalk_df[geography].unique()
-    zone_ids = controls_df.index.intersection(zone_ids)
-        
-    def get_results(zone_id):
-        zone_row_map = results_df[geography] == zone_id
-        zone_weights = results_df[zone_row_map]
-        
-        incidence = incidence_df.loc[zone_weights[hh_id_col]]
-        weights = zone_weights[weight_col].tolist()
-        
-        x = [(incidence[c] * weights).sum() for c in control_names]
-        
-        return x
-
+    zone_ids = controls_table.index.intersection(zone_ids).astype(np.int64)
+    
+    # Using numpy matrix multiplication for efficient aggregation        
+    zone_results_df = results_df.loc[results_df[geography].isin(zone_ids), [geography, hh_id_col, weight_col]]    
+    
+    geo_vec = zone_results_df[geography].to_numpy()
+    weights = zone_results_df[weight_col].to_numpy()
+    incidence = incidence_df.loc[zone_results_df[hh_id_col], control_names].to_numpy()
+    
+    results = np.transpose(np.transpose(incidence) * weights)
+    results = np.column_stack([results, geo_vec])
+    summary_df = pd.DataFrame(results, columns=control_names + [geography]).groupby(geography).sum()
+    
 
     logger.info("summarizing %s" % geography)
-    controls = [controls_df.loc[x].tolist() for x in zone_ids]
-    results = [get_results(x) for x in tqdm(zone_ids)]
-
+    controls = [controls_table.loc[x].tolist() for x in zone_ids]
+    
     controls_df = pd.DataFrame(
         data=np.asanyarray(controls),
         columns=['%s_control' % c for c in control_names],
         index=zone_ids
     )
 
-    summary_df = pd.DataFrame(
-        data=np.asanyarray(results),
-        columns=['%s_result' % c for c in control_names],
-        index=zone_ids
-    )
-
     dif_df = pd.DataFrame(
-        data=np.asanyarray(results) - np.asanyarray(controls),
+        # data=np.asanyarray(results) - np.asanyarray(controls),
+        data=np.array(summary_df) - np.array(controls_df),
         columns=['%s_diff' % c for c in control_names],
         index=zone_ids
     )
