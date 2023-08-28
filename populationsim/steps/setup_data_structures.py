@@ -85,6 +85,16 @@ def build_incidence_table(control_spec, households_df, persons_df, crosswalk_df)
             incidence = df.groupby([hh_col], as_index=True).sum()
 
         incidence_table[control_row.target] = incidence
+    
+    # Check the control group sums
+    if 'control_group' in control_spec.columns:
+        for (control_group, table), fields in control_spec.groupby(['control_group', 'seed_table'])['target']:                        
+            total_col = setting('total_per_control') if table == 'persons' else setting('total_hh_control')
+            is_equal = incidence_table[fields].sum(axis=1) == incidence_table[total_col]
+
+            if not is_equal.all():
+                print(f"Control group {control_group} does not sum to {total_col} for {is_equal.sum()} zones. Is this expected?")
+                  
 
     return incidence_table
 
