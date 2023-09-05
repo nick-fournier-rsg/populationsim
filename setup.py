@@ -7,8 +7,8 @@ setup(
     name='populationsim',
     version='0.6.0',
     description='Population Synthesis',
-    author='Ben Stabler, Nicholas Fournier',
-    author_email='ben.stabler@rsginc.com, 'nick.fournier@rsginc.com',
+    author='Ben Stabler',
+    author_email='ben.stabler@rsginc.com',
     license='BSD-3',
     url='https://github.com/ActivitySim/populationsim',
     classifiers=[
