@@ -217,12 +217,12 @@ def build_crosswalk_table():
     
     # Ensure consistent nesting of geography hierarchies. e.g., a tract cannot be in two PUMAS
     geos = setting('geographies')
-    slice_geo = setting('slice_geography')
+    slice_geo = setting('slice_geography', geos[0])
     
     # Start from sliced geography.    
     slice_level = geos.index(slice_geo)
     for i, g in enumerate(geos[1:], start=0):
-        count = crosswalk.groupby(g)[geos[i]].nunique()        
+        count = crosswalk.groupby(g)[geos[i]].nunique()
         
         if (count > 1).any():
             dupes = crosswalk.loc[crosswalk[g].isin(count[count > 1].index)].groupby([geos[i], g]).size().to_frame('N')            
