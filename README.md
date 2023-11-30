@@ -13,3 +13,40 @@ needs.  PopulationSim is implemented in the
 ## Documentation
 
 https://activitysim.github.io/populationsim/
+
+
+## Installing from this repository
+The official PopulationSim releases have fallen behind ActvitySim, which is the primary dependency. As a result it has caused some incompatibilities unless package versions are locked. To avoid this, I have created this fork of PopulationSim that is compatible with the an older version of ActivitySim. In addition, I have included several bug fixes and enhancements that have not been merged into the official PopulationSim repository.
+
+Some changes in this fork:
+- Lock ActivitySim version to 1.1.3
+- Added "hard_constraints" option to expansion factors forcing the max/min values to be respected. Official PopulationSim allows these limits to be exceeded slightly.
+- Added various assertations throughout the code to catch errors earlier.
+- Added "tqdm" progress bars to some processes.
+- Converted some slow loops and pandas.apply() calls to vectorized pandas operations or slightly faster list comprehensions.
+
+I have provided several different dependency management files to make it easier to install this fork using Conda/Mamba, pip, or Poetry.
+
+
+## Installing with Conda/Mamba
+The easiest way to install this fork is to use Conda or Mamba. This will install all dependencies and the forked version of PopulationSim.
+
+```bash
+# Create a new conda environment
+conda create -n populationsim python=3.9
+conda install 
+```
+
+## Development install with pip
+It is sometimes useful to install in an editable development mode. This will install an editable version of PopulationSim from your local repository. This is useful if you want to make changes to the code and test them without having to reinstall the package.
+
+```bash
+# Create a new conda environment
+conda create -n populationsim python=3.9
+
+# Clone the repository
+git clone -b v0.6.0 git@github.com:nick-fournier-rsg/populationsim.git
+cd populationsim
+pip install -e .
+```
+
