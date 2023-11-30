@@ -18,7 +18,7 @@ setup(
     ],
     packages=find_packages(exclude=['*.tests']),
     include_package_data=True,
-    python_requires='==3.9',
+    python_requires='>=3.9, <3.10',
     install_requires=[
         'activitysim == 1.1.3',
         'numpy == 1.24.4',

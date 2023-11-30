@@ -34,11 +34,14 @@ The easiest way to install this fork is to use Conda or Mamba. This will install
 ```bash
 # Create a new conda environment
 conda create -n populationsim python=3.9
-conda install 
+conda env create -f environment.yml
 ```
 
+This will install the forked version of PopulationSim from this repository and all dependencies.
+
+
 ## Development install with pip
-It is sometimes useful to install in an editable development mode. This will install an editable version of PopulationSim from your local repository. This is useful if you want to make changes to the code and test them without having to reinstall the package.
+It is sometimes useful to install in an editable development mode. You may clone the repository and install with pip using the editable flag `-e`. This will install an editable version of PopulationSim from your local repository. This is useful if you want to make changes to the code and test them without having to reinstall the package.
 
 ```bash
 # Create a new conda environment
