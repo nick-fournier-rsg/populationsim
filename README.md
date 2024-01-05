@@ -28,12 +28,22 @@ Some changes in this fork:
 I have provided several different dependency management files to make it easier to install this fork using Conda/Mamba, pip, or Poetry.
 
 
+### _Python Environment Update_!
+In an effort to enhance stability I have used Poetry to manage the dependencies for this fork. I have migrated away from the older setup.py, setup.cfg, and requirements.txt files in lieu of the more modern and simpler pyproject.toml file. I also provided an environment.yml for Conda if that is preferred.
+
+## Installing from GitHub
+You can install this fork directly from GitHub using pip. This will install all dependencies and the forked version of PopulationSim to your current Python environment.
+
+```bash
+pip install git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.1#egg=populationsim
+```
+
+
 ## Installing with Conda/Mamba
 The easiest way to install this fork is to use Conda or Mamba. This will install all dependencies and the forked version of PopulationSim.
 
 ```bash
-# Create a new conda environment
-conda create -n populationsim python=3.9
+# Create a new conda environment from the environment.yml file
 conda env create -f environment.yml
 ```
 
@@ -44,11 +54,11 @@ This will install the forked version of PopulationSim from this repository and a
 It is sometimes useful to install in an editable development mode. You may clone the repository and install with pip using the editable flag `-e`. This will install an editable version of PopulationSim from your local repository. This is useful if you want to make changes to the code and test them without having to reinstall the package.
 
 ```bash
-# Create a new conda environment
+# Create a new conda environment (or whatever environment manager you prefer)
 conda create -n populationsim python=3.9
 
 # Clone the repository
-git clone -b v0.6.0 git@github.com:nick-fournier-rsg/populationsim.git
+git clone -b v0.6.1 git@github.com:nick-fournier-rsg/populationsim.git
 cd populationsim
 pip install -e .
 ```

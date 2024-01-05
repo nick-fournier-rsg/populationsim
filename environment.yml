@@ -1,4 +1,4 @@
-name: popsim
+name: popsim_test
 channels:
   - conda-forge
   - defaults
@@ -31,7 +31,7 @@ dependencies:
   - wheel=0.42.0=pyhd8ed1ab_0
   - xz=5.2.6=h8d14728_0
   - pip:
-      - git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.0#egg=populationsim
+      - git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.1#egg=populationsim
       - absl-py==2.0.0
       - activitysim==1.1.3
       - blosc2==2.3.1
@@ -53,12 +53,12 @@ dependencies:
       - networkx==3.2.1
       - numba==0.58.1
       - numexpr==2.8.7
-      - numpy==1.24.4
+      - numpy==1.25.2
       - openmatrix==0.3.5.0
       - orca==1.8
       - ortools==9.8.3296
       - packaging==23.2
-      - pandas==2.1.3
+      - pandas==2.1.0
       - partd==1.4.1
       - protobuf==4.25.1
       - psutil==5.9.6
