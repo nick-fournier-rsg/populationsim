@@ -1,4 +1,4 @@
-name: popsim_test
+name: popsim
 channels:
   - conda-forge
   - defaults
