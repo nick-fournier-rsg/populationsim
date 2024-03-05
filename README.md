@@ -32,19 +32,10 @@ I have provided several different dependency management files to make it easier 
 In an effort to enhance stability I have used Poetry to manage the dependencies for this fork. I have migrated away from the older setup.py, setup.cfg, and requirements.txt files in lieu of the more modern and simpler pyproject.toml file. I also provided an environment.yml for Conda if that is preferred.
 
 ## Installing from GitHub
-You can install this fork directly from GitHub using pip. This will install all dependencies and the forked version of PopulationSim to your current Python environment.
+You can install this fork directly from GitHub using pip. This will install all dependencies and the forked version of PopulationSim to your *current* Python environment.
 
 ```bash
 pip install git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.1#egg=populationsim
-```
-
-
-## Installing with Conda/Mamba
-The easiest way to install this fork is to use Conda or Mamba. This will install all dependencies and the forked version of PopulationSim.
-
-```bash
-# Create a new conda environment from the environment.yml file
-conda env create -f environment.yml
 ```
 
 This will install the forked version of PopulationSim from this repository and all dependencies.
