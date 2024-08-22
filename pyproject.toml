@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "populationsim"
-version = "0.6.1"
+version = "0.6.2"
 description = "Population Synthesis (for ActivitySim)"
 authors = ["Ben Stabler <ben.stabler@rsginc.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.10"
 activitysim = "1.1.3"
 tqdm = "^4.66.1"
 ortools = "^9.8.3296"

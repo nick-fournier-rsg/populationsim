@@ -31,26 +31,19 @@ I have provided several different dependency management files to make it easier 
 ### _Python Environment Update_!
 In an effort to enhance stability I have used Poetry to manage the dependencies for this fork. I have migrated away from the older setup.py, setup.cfg, and requirements.txt files in lieu of the more modern and simpler pyproject.toml file. I also provided an environment.yml for Conda if that is preferred.
 
+
+## Setup a population sim environment
+Poetry is a modern dependency management tool used for both environment management and package management. It is similar to Conda but is more lightweight and is specifically designed for Python projects.
+
+**Important** This package requires python version 3.9. You will need to install python 3.9 even if you have a newer version of python installed.
+
+
 ## Installing from GitHub
 You can install this fork directly from GitHub using pip. This will install all dependencies and the forked version of PopulationSim to your *current* Python environment.
 
 ```bash
-pip install git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.1#egg=populationsim
+pip install git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.2#egg=populationsim
 ```
 
 This will install the forked version of PopulationSim from this repository and all dependencies.
-
-
-## Development install with pip
-It is sometimes useful to install in an editable development mode. You may clone the repository and install with pip using the editable flag `-e`. This will install an editable version of PopulationSim from your local repository. This is useful if you want to make changes to the code and test them without having to reinstall the package.
-
-```bash
-# Create a new conda environment (or whatever environment manager you prefer)
-conda create -n populationsim python=3.9
-
-# Clone the repository
-git clone -b v0.6.1 git@github.com:nick-fournier-rsg/populationsim.git
-cd populationsim
-pip install -e .
-```
 
