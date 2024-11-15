@@ -76,7 +76,7 @@ poetry shell
 You can install this fork directly from GitHub using pip. This will install all dependencies and the forked version of PopulationSim to your *current* Python environment.
 
 ```bash
-pip install git+https://github.com/nick-fournier-rsg/populationsim.git@v0.6.2#egg=populationsim
+pip install git+https://github.com/RSGInc/populationsim.git@v0.6.2#egg=populationsim
 ```
 
 This will install the forked version of PopulationSim from this repository and all dependencies.
