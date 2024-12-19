@@ -69,3 +69,6 @@ docs/_build/
 
 # vagrant
 .vagrant
+
+# Ignore pipeline files
+*.h5
