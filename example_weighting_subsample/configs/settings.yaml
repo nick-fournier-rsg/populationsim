@@ -1,0 +1,45 @@
+NO_INTEGERIZATION_EVER: yes
+INTEGERIZE_WITH_BACKSTOPPED_CONTROLS: yes
+SUB_BALANCE_WITH_FLOAT_SEED_WEIGHTS: no
+GROUP_BY_INCIDENCE_SIGNATURE: no
+USE_SIMUL_INTEGERIZER: yes
+USE_CVXPY: no
+max_expansion_factor: 8
+min_expansion_factor: 0.125
+absolute_upper_bound: 8000
+absolute_lower_bound: 0
+hard_constraints: yes
+geographies:
+- Region
+- puma_group
+seed_geography: puma_group
+data_dir: data
+input_table_list:
+- tablename: households
+  filename: seed_households.csv
+  index_col: hh_id
+- tablename: persons
+  filename: seed_households.csv
+- tablename: geo_cross_walk
+  filename: geo_cross_walk.csv
+- tablename: puma_group_control_data
+  filename: control_totals_pumas.csv
+household_weight_col: initial_weight
+household_id_col: hh_id
+total_hh_control: h_total
+control_file_name: controls.csv
+output_tables:
+  action: include
+  tables:
+  - summary_hh_weights
+  - incidence_table
+run_list:
+  steps:
+  - input_pre_processor
+  - setup_data_structures
+  - initial_seed_balancing
+  - meta_control_factoring
+  - final_seed_balancing
+  - expand_households
+  - summarize
+  - write_tables

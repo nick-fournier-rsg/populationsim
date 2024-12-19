@@ -1,0 +1,10 @@
+process,pid,rss,full_rss,uss,event,children,time
+MainProcess,19844,95_092_736,95_092_736,64_610_304,pipeline.run before preload_injectables,0,2024/12/19 09:53:42.997119
+MainProcess,19844,95_453_184,95_453_184,64_684_032,pipeline.run after preload_injectables,0,2024/12/19 09:53:43.009653
+MainProcess,19844,95_481_856,95_481_856,64_684_032,pipeline.run_model input_pre_processor start,0,2024/12/19 09:53:43.023815
+MainProcess,19844,113_254_400,113_254_400,82_288_640,pipeline.run_model input_pre_processor finished,0,2024/12/19 09:53:43.225507
+MainProcess,19844,113_729_536,113_729_536,82_739_200,pipeline.run after input_pre_processor,0,2024/12/19 09:53:43.324766
+MainProcess,19844,113_991_680,113_991_680,82_739_200,pipeline.run_model setup_data_structures start,0,2024/12/19 09:53:43.336793
+MainProcess,19844,130_310_144,130_310_144,98_844_672,pipeline.run_model setup_data_structures finished,0,2024/12/19 09:53:43.599243
+MainProcess,19844,131_530_752,131_530_752,100_204_544,pipeline.run after setup_data_structures,0,2024/12/19 09:53:43.740040
+MainProcess,19844,131_936_256,131_936_256,100_560_896,pipeline.run_model initial_seed_balancing start,0,2024/12/19 09:53:43.751929
