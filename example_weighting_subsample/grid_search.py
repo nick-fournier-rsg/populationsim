@@ -19,7 +19,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 class GridSearch:    
     # Param grid
-    sample_sizes: list = [0.01, 0.1, 0.2, 0.5]
+    sample_sizes: list = [1, 0.99, 0.9, 0.7]
     initial_perturbs: list = [0, 0.1, 0.5]
     max_exp_fact: list = [2, 4, 8]
         
@@ -98,7 +98,12 @@ class GridSearch:
             yaml.dump(new_settings, f)
 
         # Sample the seed data
-        seed_data = self.seed_data.sample(frac=1 - current_params[0])
+        seed_data = self.seed_data.sample(frac=current_params[0]).copy()
+        
+        # Rescale the initial weights to match original total
+        og_total = self.seed_data['initial_weight'].sum()
+        sub_total = seed_data['initial_weight'].sum()
+        seed_data['initial_weight'] *= og_total / sub_total
         
         # Add the perturbation of initial weights
         perturbs = 1 + np.random.uniform(-current_params[1], current_params[1], seed_data.shape[0])
@@ -113,12 +118,11 @@ class GridSearch:
     def runner(self, sample_size, initial_perturb, max_exp):          
 
         msg = (
-            f"Running with sample_size: {sample_size}, "
+            f"sample_size: {sample_size}, "
             f"initial_perturb: {initial_perturb}, "
             f"max_exp_fact: {max_exp}, "
             f"min_exp_fact: {1 / max_exp}"
         )
-        print(msg)
 
         # Update the args and current params
         current_params = (sample_size, initial_perturb, max_exp)        
@@ -126,8 +130,10 @@ class GridSearch:
         
         # Skip if output already exists
         if os.path.exists(os.path.join(current_args['output'], "final_summary_hh_weights.csv")):
-            print("Output already exists. Skipping.")
+            print("Output already exists for:", msg)
             return
+
+        print("Running:", msg)
 
         # Prepare the run data files
         self.prepare_data(current_params, current_args)
@@ -155,10 +161,8 @@ class GridSearch:
         )
         
         if result.returncode != 0:
-            print(f"Error running command: {result.stderr}")
+            print("Error running command")
             return
-        else:
-            print(f"Command ran successfully: {result.stdout}")
 
     def run(self):
         param_grid = [self.sample_sizes, self.initial_perturbs, self.max_exp_fact]        
