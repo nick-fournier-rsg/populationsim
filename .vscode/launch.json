@@ -10,15 +10,6 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
-            "name": "Debug Weighting",
-            "type": "debugpy",
-            "request": "launch",
-            "cwd": "C:/clones/hts_weighting/inst/project_templates/person_weighting/working/run1_initial",
-            "program": "C:/clones/hts_weighting/inst/populationsim/run_populationsim.py",
-            "console": "integratedTerminal",
             "justMyCode": true
         }
     ]

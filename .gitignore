@@ -72,3 +72,4 @@ docs/_build/
 
 # Ignore pipeline files
 *.h5
+example_weighting_subsample/runs/*

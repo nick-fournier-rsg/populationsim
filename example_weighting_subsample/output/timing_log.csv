@@ -1,3 +1,9 @@
 process_name,model_name,seconds,minutes
-MainProcess,input_pre_processor,0.3,0.0
+MainProcess,input_pre_processor,0.5,0.0
 MainProcess,setup_data_structures,0.4,0.0
+MainProcess,initial_seed_balancing,50.9,0.8
+MainProcess,meta_control_factoring,0.1,0.0
+MainProcess,final_seed_balancing,0.1,0.0
+MainProcess,expand_households,0.1,0.0
+MainProcess,summarize,0.1,0.0
+MainProcess,write_tables,0.3,0.0
