@@ -6,6 +6,7 @@ import sys
 import yaml
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
@@ -19,9 +20,9 @@ from concurrent.futures import ProcessPoolExecutor
 
 class GridSearch:    
     # Param grid
-    sample_sizes: list = [1, 0.99, 0.9, 0.7]
-    initial_perturbs: list = [0, 0.1, 0.5]
-    max_exp_fact: list = [2, 4, 8]
+    sample_sizes: list = [1] #[1, 0.99, 0.9, 0.7]
+    initial_perturbs: list = [0] # [0, 0.1, 0.5]
+    max_exp_fact: list =  [9, 10, 11, 12] # [2, 3, 4, 5, 6, 7, 8, 16, 32, np.inf]
         
     # Base data and settings
     base_settings: dict = None
@@ -36,6 +37,9 @@ class GridSearch:
                 
         with open(os.path.join(this_dir, "configs", "settings.yaml"), "r") as f:
             self.settings = yaml.load(f, Loader=yaml.FullLoader)
+    
+        # set abslute upper limit to inf
+        self.settings["absolute_upper_bound"] = np.inf
             
         # Read in the seed data
         self.seed_data = pd.read_csv(os.path.join(this_dir, "data", "seed_households.csv"))
@@ -159,6 +163,8 @@ class GridSearch:
             text=True,
             check=True
         )
+
+        print("Completed:", msg)
         
         if result.returncode != 0:
             print("Error running command")

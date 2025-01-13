@@ -112,7 +112,3 @@ p_race_white,puma_group,households,100,p_race_white,households.p_race_white
 p_ethnicity_hispanic,puma_group,households,100,p_ethnicity_hispanic,households.p_ethnicity_hispanic
 p_ethnicity_not_hispanic,puma_group,households,100,p_ethnicity_not_hispanic,households.p_ethnicity_not_hispanic
 p_total,puma_group,households,500,p_total,households.p_total
-p_made_none,puma_group,households,500,p_made_none,households.p_made_none
-p_made_mandatory,puma_group,households,200,p_made_mandatory,households.p_made_mandatory
-p_made_nonmand,puma_group,households,200,p_made_nonmand,households.p_made_nonmand
-p_made_na,puma_group,households,200,p_made_na,households.p_made_na
