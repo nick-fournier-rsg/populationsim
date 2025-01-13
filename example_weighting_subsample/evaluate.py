@@ -192,7 +192,7 @@ class Evaluate:
         self.bias_var = pd.DataFrame.from_dict(bias_var, orient="index")
         
         plot_df = self.bias_var.copy()
-        plot_df["sample_size"] = plot_df["sample_size"].astype(str) + "%"
+        plot_df["sample_size"] = plot_df["sample_size"].astype(int).astype(str) + "%"
         
         # Plotly scatter plot
         fig = px.scatter(
@@ -220,11 +220,45 @@ class Evaluate:
 
         fig.write_html(plot_dir / "bias_variance_plot.html")
         
+        # Make plot without sampling and perturbation
+        plot_df_full = plot_df[
+            (plot_df["sample_size"] == "100%") & 
+            (plot_df["initial_perturb"] == 0)
+        ].sort_values("nrmse")
         
-    
-matplotlib.use('TkAgg')
+        # Don't include base run label
+        plot_df_full = plot_df_full.drop('base')
+        
+            
+        # Plotly lineplot
+        fig = px.scatter(
+            plot_df_full,
+            x="nrmse",
+            y="variance",
+            labels={"nrmse": "Fit (NRMSE)", "variance": "Variance (normalized)"},
+            title="Bias-Variance Decomposition (Full Sample, No Perturbation)",
+            text=plot_df_full.index,
+        )
 
-    
+        # Make text only visible on hover
+        fig.update_traces(
+            mode="markers",
+            marker=dict(size=10, opacity=0.5),
+            hovertemplate='<b>%{text}</b><br><br>NRMSE: %{x}<br>Variance: %{y}<extra></extra>'
+        )
+
+        # Add a line between points
+        fig.add_trace(
+            px.line(
+                plot_df_full,
+                x="nrmse",
+                y="variance",
+                line_shape="linear"
+            ).data[0]
+        )
+        
+        fig.write_html(plot_dir / "bias_variance_plot_full.html")
+   
 
 
 if __name__ == "__main__":

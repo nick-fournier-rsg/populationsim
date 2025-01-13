@@ -22,7 +22,7 @@ class GridSearch:
     # Param grid
     sample_sizes: list = [1] #[1, 0.99, 0.9, 0.7]
     initial_perturbs: list = [0] # [0, 0.1, 0.5]
-    max_exp_fact: list =  [9, 10, 11, 12] # [2, 3, 4, 5, 6, 7, 8, 16, 32, np.inf]
+    max_exp_fact: list =  [4, 16] # [2, 3, 4, 5, 6, 7, 8, 16, 32, np.inf]
         
     # Base data and settings
     base_settings: dict = None
