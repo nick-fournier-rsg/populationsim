@@ -6,7 +6,6 @@ import sys
 import yaml
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
 
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
@@ -20,13 +19,16 @@ from concurrent.futures import ProcessPoolExecutor
 
 class GridSearch:    
     # Param grid
-    sample_sizes: list = [1] #[1, 0.99, 0.9, 0.7]
-    initial_perturbs: list = [0] # [0, 0.1, 0.5]
-    max_exp_fact: list =  [4, 16] # [2, 3, 4, 5, 6, 7, 8, 16, 32, np.inf]
-        
+    sample_sizes: list = [1, 0.99, 0.9, 0.7]
+    initial_perturbs: list = [0, 0.1, 0.5]
+    # max_exp_fact: list = [2, 4, 8, 16, np.inf]
+    max_exp_fact: list = (np.round(4 * np.logspace(np.log10(2), np.log10(18), 24)) / 4).tolist() + [np.inf]
+
     # Base data and settings
     base_settings: dict = None
     base_seed: pd.DataFrame = None
+    
+    statuses = {}
     np.random.seed(0)
 
     
@@ -39,7 +41,7 @@ class GridSearch:
             self.settings = yaml.load(f, Loader=yaml.FullLoader)
     
         # set abslute upper limit to inf
-        self.settings["absolute_upper_bound"] = np.inf
+        self.settings["absolute_upper_bound"] = None
             
         # Read in the seed data
         self.seed_data = pd.read_csv(os.path.join(this_dir, "data", "seed_households.csv"))
@@ -94,8 +96,13 @@ class GridSearch:
     
         # Update the settings
         new_settings = self.settings.copy()
-        new_settings["max_expansion_factor"] = current_params[2]
-        new_settings["min_expansion_factor"] = 1 / current_params[2]
+        
+        if (current_params[2] == np.inf):
+            new_settings["max_expansion_factor"] = None
+            new_settings["min_expansion_factor"] = None
+        else:
+            new_settings["max_expansion_factor"] = current_params[2]
+            new_settings["min_expansion_factor"] = 1 / current_params[2]
         
         # Write the settings        
         with open(os.path.join(current_args['config'], "settings.yaml"), "w") as f:
@@ -119,14 +126,7 @@ class GridSearch:
         seed_data.to_csv(os.path.join(current_args['data'], "seed_households.csv"), index=False)
 
 
-    def runner(self, sample_size, initial_perturb, max_exp):          
-
-        msg = (
-            f"sample_size: {sample_size}, "
-            f"initial_perturb: {initial_perturb}, "
-            f"max_exp_fact: {max_exp}, "
-            f"min_exp_fact: {1 / max_exp}"
-        )
+    def runner(self, sample_size, initial_perturb, max_exp) -> None:          
 
         # Update the args and current params
         current_params = (sample_size, initial_perturb, max_exp)        
@@ -134,10 +134,7 @@ class GridSearch:
         
         # Skip if output already exists
         if os.path.exists(os.path.join(current_args['output'], "final_summary_hh_weights.csv")):
-            print("Output already exists for:", msg)
-            return
-
-        print("Running:", msg)
+            return "Output already exists"
 
         # Prepare the run data files
         self.prepare_data(current_params, current_args)
@@ -145,9 +142,7 @@ class GridSearch:
         # Get the path to the runner
         runner_path = os.path.join(os.path.dirname(__file__), "run_populationsim.py")
         
-        # Convert to args list for string concatenation
-        current_args['working_dir']
-        
+        # Convert to args list for string concatenation       
         args_list = []
         for k, v in current_args.items():
             args_list.extend([f"--{k}", v])
@@ -164,29 +159,53 @@ class GridSearch:
             check=True
         )
 
-        print("Completed:", msg)
-        
         if result.returncode != 0:
-            print("Error running command")
-            return
+            return result.stderr
+        
+        return "Complete"
+        
+
+    def update_status(self, run_id, message):
+        self.statuses[run_id] = message
+        # Clear the screen and print the updated statuses
+        sys.stdout.write("\033[H\033[J")  # Clear the terminal
+        for run_id, status in self.statuses.items():
+            sys.stdout.write(f"Process {run_id} {status}\n")
+        sys.stdout.flush()
+
 
     def run(self):
         param_grid = [self.sample_sizes, self.initial_perturbs, self.max_exp_fact]        
 
+        print(f"Starting grid search for {len(param_grid[0]) * len(param_grid[1]) * len(param_grid[2])} runs")
+
         n_workers = int(os.cpu_count() // (4 / 3))
         with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            
+            futures = []
             # Submit tasks to the executor
-            futures = [
-                executor.submit(self.runner, sample_size, initial_perturb, max_exp)
-                for sample_size, initial_perturb, max_exp in itertools.product(*param_grid)
-            ]
+            for sample_size, initial_perturb, max_exp in itertools.product(*param_grid):
+                
+                run_id = (
+                    f"sample_size: {sample_size}, "
+                    f"initial_perturb: {initial_perturb}, "
+                    f"max_exp_fact: {max_exp}"
+                )
+                
+                self.update_status(run_id, "...")
 
-            # Optionally, process results or exceptions
-            for future in futures:
+
+                future = executor.submit(self.runner, sample_size, initial_perturb, max_exp)
+                futures.append((future, run_id))
+
+            # Process completion and update statuses
+            for future, run_id in futures:
                 try:
-                    future.result()  # This will raise exceptions if any occurred
+                    result = future.result()
+                    self.update_status(run_id, "...Complete!")
                 except Exception as e:
-                    print(f"Error during execution: {e}")
+                    self.update_status(run_id, f"Error: {e}")
+
 
 
 if __name__ == '__main__':

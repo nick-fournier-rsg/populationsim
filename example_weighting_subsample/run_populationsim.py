@@ -27,6 +27,7 @@ t0 = print_elapsed_time()
 
 logger = logging.getLogger('populationsim')
 
+
 logger.info("GROUP_BY_INCIDENCE_SIGNATURE: %s"
             % setting('GROUP_BY_INCIDENCE_SIGNATURE'))
 logger.info("INTEGERIZE_WITH_BACKSTOPPED_CONTROLS: %s"

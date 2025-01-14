@@ -5,9 +5,8 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib
 import plotly.express as px
-matplotlib.use('TkAgg')
+import plotly.graph_objects as go
 
 
 class Evaluate:
@@ -163,11 +162,30 @@ class Evaluate:
             ).groupby("puma_group").sum()
             
             # Calculate fit and variance
-            # Fit NRMSE
-            nrmse = np.sqrt(np.mean((results - targets) ** 2)) / np.mean(targets)
+            metrics = {}
+            # Fit meaures 
+            # NRMSE, MAPE
+            metrics['nrmse'] = np.sqrt(np.mean((results - targets) ** 2)) / np.mean(targets)
+            metrics['mape'] = np.mean(np.abs(results - targets) / targets)
             
+            # Variance measures
             # Variance of weights (normalized by mean)
-            variance = np.var(wts) / np.mean(wts)
+            metrics['variance'] = np.var(wts) / np.mean(wts)
+
+            # Min/Max/Mean weight
+            metrics['wt_max'] = np.max(wts)
+            metrics['wt_min'] = np.min(wts)
+            metrics['wt_mean'] = np.mean(wts)
+            metrics['wt_std'] = np.std(wts)
+            
+            # Percentiles
+            metrics['wt_10'] = np.percentile(wts, 10)
+            metrics['wt_median'] = np.median(wts)
+            metrics['wt_90'] = np.percentile(wts, 90)
+            
+            # Max deviation from initial weight
+            metrics['wt_max_dev'] = np.max(np.abs(incidence['initial_weight'] / wts))
+            metrics['wt_mean_dev'] = np.mean(np.abs(incidence['initial_weight'] / wts))
 
             # Parse the run name, convert to float
             params = run.split("-")
@@ -185,18 +203,21 @@ class Evaluate:
             
             # Result dictionary
             result_dict = {k: float(v) for k, v in zip(["sample_size", "initial_perturb", "max_exp"], params)}
-            result_dict = {**result_dict, "nrmse": nrmse, "variance": variance}
+            result_dict = {**result_dict, **metrics}
             
             bias_var[run_label] = result_dict
             
         self.bias_var = pd.DataFrame.from_dict(bias_var, orient="index")
         
-        plot_df = self.bias_var.copy()
-        plot_df["sample_size"] = plot_df["sample_size"].astype(int).astype(str) + "%"
         
+    def plot_bias_variance(self):
+        plot_df_with_sampleperturb = self.bias_var.copy()
+        plot_df_with_sampleperturb["sample_size"] = plot_df_with_sampleperturb["sample_size"].astype(int).astype(str) + "%"
+        
+        # Vary every parameter -----------------------------------------------
         # Plotly scatter plot
         fig = px.scatter(
-            plot_df,
+            plot_df_with_sampleperturb,
             x="nrmse",
             y="variance",
             color="sample_size",
@@ -213,51 +234,140 @@ class Evaluate:
             marker=dict(size=10, opacity=0.5),
             hovertemplate='<b>%{text}</b><br><br>NRMSE: %{x}<br>Variance: %{y}<extra></extra>'
         )
+
         # Save to html
         plot_dir = self.root_dir / "plots"
         if not os.path.exists(plot_dir):
             os.makedirs(plot_dir)
 
-        fig.write_html(plot_dir / "bias_variance_plot.html")
+        fig.write_html(plot_dir / "bias_variance_with_sample_and_perturb_plot.html")
         
-        # Make plot without sampling and perturbation
-        plot_df_full = plot_df[
+        
+        # Constant sample size and perturbation --------------------------------
+        # Don't include base run label
+        plot_df = plot_df_with_sampleperturb.copy()
+        plot_df = plot_df[
             (plot_df["sample_size"] == "100%") & 
             (plot_df["initial_perturb"] == 0)
-        ].sort_values("nrmse")
+        ].sort_values("nrmse").drop('base')
         
-        # Don't include base run label
-        plot_df_full = plot_df_full.drop('base')
-        
-            
         # Plotly lineplot
-        fig = px.scatter(
-            plot_df_full,
-            x="nrmse",
+        fig = px.line(
+            plot_df,
+            x="mape",
             y="variance",
-            labels={"nrmse": "Fit (NRMSE)", "variance": "Variance (normalized)"},
+            line_shape="spline",
+            labels={"mape": "Fit (Mean Absolute Percent Error)", "variance": "Variance (normalized)"},
             title="Bias-Variance Decomposition (Full Sample, No Perturbation)",
-            text=plot_df_full.index,
+            range_x=[0, 0.16],
+            text=plot_df.index
         )
-
-        # Make text only visible on hover
+        
+        #  Make labels visible on hover
         fig.update_traces(
-            mode="markers",
-            marker=dict(size=10, opacity=0.5),
+            mode="lines+markers",
+            marker=dict(size=5),
             hovertemplate='<b>%{text}</b><br><br>NRMSE: %{x}<br>Variance: %{y}<extra></extra>'
         )
+        
+        fig.write_html(plot_dir / "bias_variance_plot.html")
+        
 
-        # Add a line between points
-        fig.add_trace(
-            px.line(
-                plot_df_full,
-                x="nrmse",
-                y="variance",
-                line_shape="linear"
-            ).data[0]
+        # Weight distribution -------------------------------------------------
+        # Plotly lineplot      
+        fig = px.line(
+                plot_df,
+                x="mape",
+                y=["wt_max", "wt_mean", "wt_median", "wt_min"],
+                line_shape="spline",
+                labels={
+                    "mape": "Fit (Mean Absolute Percent Error)", 
+                    "value": "Household weight (normalized)",
+                    },
+                title="Bias-Variance Decomposition (Full Sample, No Perturbation)",
+                log_y=True
+            )
+ 
+        fig.add_traces([
+            dict(
+                x=plot_df["mape"],
+                y=plot_df["wt_10"],
+                mode="lines",
+                fill=None,
+                line=dict(color="rgba(0,0,0,0)"),
+                showlegend=False
+            ),
+            dict(
+                x=plot_df["mape"],
+                y=plot_df["wt_90"],
+                mode="lines",
+                fill="tonexty",  # Fills to the previous trace
+                line=dict(color="rgba(0,0,0,0)"),
+                name="10 - 90 percentile"
+            ),
+        ])
+        
+        # Custom legend labels
+        fig.update_layout(
+            legend_title_text='Weight Statistics',
+            legend=dict(
+            itemsizing='constant',
+            title_font_size=14,
+            font=dict(size=12),
+            traceorder='normal'
+            )
         )
         
-        fig.write_html(plot_dir / "bias_variance_plot_full.html")
+        # Map custom labels to the legend
+        custom_labels = {
+            "wt_max": "Maximum Weight",
+            "wt_mean": "Mean Weight",
+            "wt_median": "Median Weight",
+            "wt_min": "Minimum Weight",
+        }        
+        
+        # Update trace names for custom legend labels
+        for trace, y_variable in zip(fig.data, custom_labels.keys()):
+            trace.name = custom_labels[y_variable]
+        
+        fig.write_html(plot_dir / "weight_dist.html")
+
+
+    def plot_violin(self):
+        """Violin plot of weights vs max exp"""   
+        plot_dir = self.root_dir / "plots"
+        if not os.path.exists(plot_dir):
+            os.makedirs(plot_dir)
+        
+        # Make max_exp numeric
+        plot_df = self.results.copy()
+
+        # Sort by max_exp as if it were numeric
+        plot_df["max_exp_num"] = plot_df["max_exp"].astype(float)
+        plot_df = plot_df.sort_values("max_exp_num")        
+        
+        # Create a violin plot with spanmode="hard"
+        fig = go.Figure()
+        fig.add_trace(
+            go.Violin(
+                x=plot_df["max_exp"],
+                y=plot_df["puma_group_balanced_weight"],
+                spanmode="hard",  # Set spanmode to "hard"
+                box_visible=False,  # Optional: Show a box plot inside the violin
+                points=False,  # Show all data points
+                # line_color="blue",
+                name="Weight Distribution",
+            )
+        )
+
+        # Update layout
+        fig.update_layout(
+            title="Weight Distribution by Max Expansion Factor",
+            yaxis_title="Household Weight",
+            xaxis_title="Max Expansion Factor",
+        )
+        
+        fig.write_html(plot_dir / "weight_violin.html")
    
 
 
@@ -267,5 +377,7 @@ if __name__ == "__main__":
     eval = Evaluate(root_dir)
     eval.collate_results()
     eval.bias_variance_decomposition()
+    eval.plot_bias_variance()
+    eval.plot_violin()
     eval.plot_correllation()
     
