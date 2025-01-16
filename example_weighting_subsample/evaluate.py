@@ -7,6 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 class Evaluate:
@@ -71,6 +72,11 @@ class Evaluate:
         results = self.results.rename(columns={"puma_group_balanced_weight": "hh_weight"})
         base_results = results[results["run"] == "base"]
         test_results = results[results["run"] != "base"]
+
+        max_exp_range = [2, 4, 6, 8, 16, np.inf]
+
+        # Filter out only select combinations
+        test_results = test_results[test_results["max_exp"].astype(float).isin(max_exp_range)]
         
         # For each pair, compare the scenario to the base
         for param1, param2 in pairs:
@@ -81,59 +87,81 @@ class Evaluate:
         
             test_df = test_results[test_results[missing_param] == const_param]
             
-            groups = test_df.groupby([param1, param2])
+            print(f"Plotting correlation for {param1} and {param2} (holding {missing_param}={const_param})")
+            
+            # Sort by params
+            test_df = test_df.sort_values([param1, param2])
+            
+            groups = test_df.groupby([param1, param2], sort=True)
             
             # Prepare a grid layout
             n_groups = len(groups)
             cols = 3  # Adjust the number of columns as needed
             rows = (n_groups + cols - 1) // cols  # Calculate the number of rows
             
-            fig, axes = plt.subplots(rows, cols, figsize=(cols * 5, rows * 4), sharex=True, sharey=True)
-            axes = axes.flatten()  # Flatten to easily iterate over axes
+            # Create a subplot figure
+            fig = make_subplots(
+                rows=rows,
+                cols=cols,
+                shared_xaxes=True,
+                shared_yaxes=True,
+                subplot_titles=[f"{param1}={k[0]}, {param2}={k[1]}" for k in groups.groups.keys()],
+            )
 
+            # Iterate over groups and create scatter plots
             for idx, ((param1_val, param2_val), df) in enumerate(groups):
+                row = idx // cols + 1
+                col = idx % cols + 1
 
                 # Combine the base and test data weight columns into a single dataframe
                 df_compare = df.merge(base_results, on="hh_id", suffixes=("", "_base"), how="inner")
 
-                # Create scatterplot
-                sns.scatterplot(x="hh_weight_base", y="hh_weight", data=df_compare, ax=axes[idx], s=10, alpha=0.5)
-                axes[idx].set_title(f"{param1}={param1_val}, {param2}={param2_val}", fontsize=10)
+                # Create scatter plot
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_compare["hh_weight_base"],
+                        y=df_compare["hh_weight"],
+                        mode="markers",
+                        marker=dict(size=2, opacity=0.6),
+                        name=f"{param1}={param1_val}, {param2}={param2_val}",
+                    ),
+                    row=row,
+                    col=col,
+                )
 
-                # Set equal aspect ratio and make the plot square
-                axes[idx].set_aspect('equal', adjustable='box')
-                
-                # Add a diagonal line
-                lims = [
-                    df_compare["hh_weight"].min(),  # min of both axes
-                    df_compare["hh_weight"].max(),  # max of both axes
-                ]
-                axes[idx].plot(lims, lims, 'k-', alpha=0.75, zorder=0)
+                # Add a diagonal line for reference
+                lims = [df_compare["hh_weight"].min(), df_compare["hh_weight"].max()]
+                fig.add_trace(
+                    go.Scatter(
+                        x=lims,
+                        y=lims,
+                        mode="lines",
+                        line=dict(color="black", dash="dash"),
+                        showlegend=False,
+                    ),
+                    row=row,
+                    col=col,
+                )
 
-                # Remove individual axis labels
-                axes[idx].set_xlabel("")
-                axes[idx].set_ylabel("")
-                    
-            # Remove unused subplots if groups < rows * cols
-            for idx in range(len(groups), len(axes)):
-                fig.delaxes(axes[idx])
-                
-            # Add shared labels for the whole grid
-            fig.supxlabel("Test Weight (hh_weight)", fontsize=12)
-            fig.supylabel("Base Weight (hh_weight_base)", fontsize=12)
+            # Update layout
+            fig.update_layout(
+                title_text=f"Correlation for {param1} and {param2} (holding {missing_param}={const_param})",
+                height=rows * 400,
+                width=cols * 400,
+                showlegend=False,
+            )
 
-            # Adjust layout and show plot
-            fig.suptitle(f"Correlation for {param1} and {param2} (holding {missing_param}={const_param})", fontsize=16)
-            plt.subplots_adjust(hspace=0.5)  # Add vertical spacing
-            plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust rect to leave space for suptitle
-            
-            # Plot dir
+            # Add shared axis labels
+            fig.update_xaxes(title_text="Base Weight (hh_weight_base)", showgrid=True, scaleanchor="y")
+            fig.update_yaxes(title_text="Test Weight (hh_weight)", showgrid=True, scaleanchor="x")
+
+            # Save to HTML
             plot_dir = self.root_dir / "plots"
             if not os.path.exists(plot_dir):
                 os.makedirs(plot_dir)
-            plot_path = plot_dir / f"correlation_plot_{param1}-vs-{param2}.png"
-            plt.savefig(plot_path, dpi=300)
-            
+            plot_path = plot_dir / f"correlation_plot_{param1}-vs-{param2}.html"
+            fig.write_html(str(plot_path))
+
         print("Done plotting")
 
     def bias_variance_decomposition(self):
@@ -376,8 +404,8 @@ if __name__ == "__main__":
     root_dir = Path(__file__).parent
     eval = Evaluate(root_dir)
     eval.collate_results()
+    eval.plot_correllation()
     eval.bias_variance_decomposition()
     eval.plot_bias_variance()
     eval.plot_violin()
-    eval.plot_correllation()
     
